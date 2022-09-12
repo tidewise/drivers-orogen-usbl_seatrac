@@ -10,25 +10,32 @@ import_types_from "usbl_seatracTypes.hpp"
 # library's pkg-config name) and then the header can be used. Following Rock
 # conventions, a common use-case would be:
 #
-# using_library "usbl_seatrac"
+using_library "iodrivers_base"
+using_library "usbl_seatrac"
 # import_types_from "usbl_seatrac/CustomType.hpp"
 
 # If this project uses data types that are defined in other oroGen projects,
 # these projects should be imported there as well.
 import_types_from "std"
+import_types_from "iodrivers_base"
+
 # import_types_from "base"
 
 # Declare a new task context (i.e., a component)
 #
 # The corresponding C++ class can be edited in tasks/Task.hpp and
 # tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
-task_context "Task" do
+task_context "Task" , subclasses: "iodrivers_base::Task" do
     # This is the default from now on, and should not be removed. Rock will
     # transition to a setup where all components use a configuration step.
     needs_configuration
 
     # A configuration property (here, a std::string). Its value can be retrieved
     # in the C++ code with # _config_value.get() and _config_value.set(new_value).
+    
+    # The device port used to communicate with componet
+    property "device_port", "usbl_seatrac/DevicePort", "PORT_USB"
+
     property "config_value", "/std/string"
 
     # An input port, i.e. an object from which the component gets data from
