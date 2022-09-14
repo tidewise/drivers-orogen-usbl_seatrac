@@ -46,6 +46,11 @@ bool Task::startHook() {
 }
 
 void Task::updateHook() {
+    iodrivers_base::RawPacket packet;
+    while (_input_in.read(packet, false) == RTT::NewData) {
+        mDriver->writeMessage(packet.data);
+    }
+    
     TaskBase::updateHook();
 }
 
