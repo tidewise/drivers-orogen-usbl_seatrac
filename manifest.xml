@@ -6,8 +6,9 @@
   <license></license>
   <url>http://</url>
   <logo>http://</logo>
+  <depend package="orogen" />
   <depend package="base/cmake" />
-  <depend package="base/oroge/types" />
+  <depend package="base/orogen/types" />
   <depend package="drivers/orogen/iodrivers_base" />
   <depend package="drivers/usbl_seatrac" />
 </package>
