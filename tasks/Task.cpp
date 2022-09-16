@@ -4,6 +4,7 @@
 #include <iodrivers_base/ConfigureGuard.hpp>
 
 using namespace usbl_seatrac;
+using base::samples::RigidBodyState;
 
 Task::Task(std::string const& name)
     : TaskBase(name)
@@ -14,15 +15,22 @@ Task::~Task()
 {
 }
 
+static RigidBodyState convertToRBS(PingResponse const& data) {
+    RigidBodyState rbs;
 
+    rbs.position = Eigen::Vector3d(
+        data.acoustic_fix.position.east,
+        data.acoustic_fix.position.north,
+        -data.acoustic_fix.position.depth);
+    return rbs;
+}
 
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See Task.hpp for more detailed
 // documentation about them.
-
 bool Task::configureHook() {
 
-    std::unique_ptr<gps_ublox::Driver> driver(new Driver());
+    std::unique_ptr<usbl_seatrac::Driver> driver(new Driver());
     iodrivers_base::ConfigureGuard guard(this);
     if (!_io_port.get().empty()) {
         driver->openURI(_io_port.get());
@@ -46,10 +54,9 @@ bool Task::startHook() {
 }
 
 void Task::updateHook() {
-    iodrivers_base::RawPacket packet;
-    while (_input_in.read(packet, false) == RTT::NewData) {
-        mDriver->writeMessage(packet.data);
-    }
+    PingResponse response = mDriver->Ping(_destination_id.get(), _msg_type.get());
+    auto rbs = convertToRBS(response);
+    _pose.write(rbs);
     
     TaskBase::updateHook();
 }

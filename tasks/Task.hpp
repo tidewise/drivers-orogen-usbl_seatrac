@@ -29,7 +29,7 @@ tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
     {
 	friend class TaskBase;
     protected:
-        std::unique_ptr<gps_ublox::Driver> mDriver;
+        std::unique_ptr<usbl_seatrac::Driver> mDriver;
 
 
     public:
