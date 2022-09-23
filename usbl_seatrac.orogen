@@ -11,13 +11,14 @@ import_types_from "usbl_seatrac/Protocol.hpp"
 # Driver task for USBL Seatrac X150/X010
 # The corresponding C++ class can be edited in tasks/Task.hpp and
 # tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
-task_context "Task" , subclasses: "iodrivers_base::Task" do
+task_context "Task", subclasses: "iodrivers_base::Task" do
     needs_configuration
 
     # The baud rate used to transfer data
     property "baud_rate", "usbl_seatrac/protocol/BaudRate", "BAUD_115200"
-    # The Beacon Id to send the Ping 
-    property "destination_id", "usbl_seatrac/protocol/BeaconIdentificationCode", "BEACON_ID2"
+    # The Beacon Id to send the Ping
+    property "destination_id", "usbl_seatrac/protocol/BeaconIdentificationCode",
+             "BEACON_ID2"
     # The type of data message. It could be: MSG_REQ, MSG_REQU, MSG_REQX
     property "msg_type", "usbl_seatrac/protocol/AcousticMessageType", "MSG_REQX"
 

@@ -5,6 +5,8 @@
 
 #include "usbl_seatrac/TaskBase.hpp"
 #include <usbl_seatrac/Driver.hpp>
+#include <base/samples/RigidBodyState.hpp>
+
 
 namespace usbl_seatrac{
 

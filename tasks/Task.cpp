@@ -15,13 +15,13 @@ Task::~Task()
 {
 }
 
-static RigidBodyState convertToRBS(PingResponse const& data) {
+static RigidBodyState convertToRBS(PingStatus const& data) {
     RigidBodyState rbs;
 
     rbs.position = Eigen::Vector3d(
-        data.acoustic_fix.position.east,
-        data.acoustic_fix.position.north,
-        -data.acoustic_fix.position.depth);
+        data.response.acoustic_fix.position.east,
+        data.response.acoustic_fix.position.north,
+        -data.response.acoustic_fix.position.depth);
     return rbs;
 }
 
@@ -54,9 +54,11 @@ bool Task::startHook() {
 }
 
 void Task::updateHook() {
-    PingResponse response = mDriver->Ping(_destination_id.get(), _msg_type.get());
-    auto rbs = convertToRBS(response);
-    _pose.write(rbs);
+    PingStatus status = mDriver->Ping(_destination_id.get(), _msg_type.get());
+    if (status.flag == 1) {
+        auto rbs = convertToRBS(status);
+        _pose.write(rbs);
+    }
     
     TaskBase::updateHook();
 }
