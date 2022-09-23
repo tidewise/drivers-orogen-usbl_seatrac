@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 name "usbl_seatrac"
 
 import_types_from "std"
@@ -27,4 +29,3 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
     port_driven
     fd_driven
 end
-

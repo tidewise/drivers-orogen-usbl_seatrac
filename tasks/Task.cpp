@@ -15,11 +15,11 @@ Task::~Task()
 {
 }
 
-static RigidBodyState convertToRBS(PingStatus const& data) {
+static RigidBodyState convertToRBS(PingStatus const& data)
+{
     RigidBodyState rbs;
 
-    rbs.position = Eigen::Vector3d(
-        data.response.acoustic_fix.position.east,
+    rbs.position = Eigen::Vector3d(data.response.acoustic_fix.position.east,
         data.response.acoustic_fix.position.north,
         -data.response.acoustic_fix.position.depth);
     return rbs;
@@ -28,7 +28,8 @@ static RigidBodyState convertToRBS(PingStatus const& data) {
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See Task.hpp for more detailed
 // documentation about them.
-bool Task::configureHook() {
+bool Task::configureHook()
+{
 
     std::unique_ptr<usbl_seatrac::Driver> driver(new Driver());
     iodrivers_base::ConfigureGuard guard(this);
@@ -37,7 +38,7 @@ bool Task::configureHook() {
     }
     setDriver(driver.get());
 
-    if (! TaskBase::configureHook()) {
+    if (!TaskBase::configureHook()) {
         return false;
     }
 
@@ -46,32 +47,41 @@ bool Task::configureHook() {
     return true;
 }
 
-bool Task::startHook() {
-    if (! TaskBase::startHook()) {
+bool Task::startHook()
+{
+    if (!TaskBase::startHook()) {
         return false;
     }
     return true;
 }
 
-void Task::updateHook() {
+void Task::updateHook()
+{
     PingStatus status = mDriver->Ping(_destination_id.get(), _msg_type.get());
     if (status.flag == 1) {
         auto rbs = convertToRBS(status);
         _pose.write(rbs);
     }
-    
+
     TaskBase::updateHook();
 }
 
-void Task::errorHook() {
+void Task::processIO()
+{
+}
+
+void Task::errorHook()
+{
     TaskBase::errorHook();
 }
 
-void Task::stopHook() {
+void Task::stopHook()
+{
     TaskBase::stopHook();
 }
 
-void Task::cleanupHook() {
+void Task::cleanupHook()
+{
     TaskBase::cleanupHook();
     mDriver.reset();
 }

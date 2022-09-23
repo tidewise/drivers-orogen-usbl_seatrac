@@ -83,6 +83,7 @@ tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
          * it again. Finally, FatalError cannot be recovered.
          */
         void updateHook();
+        void processIO();
 
         /** This hook is called by Orocos when the component is in the
          * RunTimeError state, at each activity step. See the discussion in
