@@ -35,4 +35,12 @@ describe OroGen.usbl_seatrac.Task do
         assert_equal(257, response.position.y)
         assert_equal(-257, response.position.z)
     end
+
+    it "interprets a ping error message from the device" do
+        packet1 = raw_packet_from_s("$4000028015\r\n")
+        packet2 = raw_packet_from_s("$43340266D5\r\n")
+        response =
+            expect_execution { syskit_write @raw_io.out_port, packet1, packet2 }
+            .to { have_no_new_sample task.pose_port, at_least_during: 0.5 }
+    end
 end
