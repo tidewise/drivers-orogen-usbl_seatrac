@@ -16,8 +16,6 @@ import_types_from "usbl_seatrac/Protocol.hpp"
 task_context "Task", subclasses: "iodrivers_base::Task" do
     needs_configuration
 
-    # The baud rate used to transfer data
-    property "baud_rate", "usbl_seatrac/protocol/BaudRate", "BAUD_115200"
     # The Beacon Id to send the Ping
     property "destination_id", "usbl_seatrac/protocol/BeaconIdentificationCode",
              "BEACON_ID2"
@@ -26,6 +24,5 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
 
     output_port("pose", "base/samples/RigidBodyState")
 
-    port_driven
-    fd_driven
+    periodic 0.1
 end

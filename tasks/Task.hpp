@@ -33,6 +33,9 @@ tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
     protected:
         std::unique_ptr<usbl_seatrac::Driver> mDriver;
 
+    private: 
+        usbl_seatrac::protocol::BeaconIdentificationCode destination_id;
+        usbl_seatrac::protocol::AcousticMessageType msg_type;
 
     public:
         /** TaskContext constructor for Task

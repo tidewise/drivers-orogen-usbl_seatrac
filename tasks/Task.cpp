@@ -38,6 +38,9 @@ bool Task::configureHook()
     }
     setDriver(driver.get());
 
+    destination_id = _destination_id.get();
+    msg_type = _msg_type.get();
+
     if (!TaskBase::configureHook()) {
         return false;
     }
@@ -57,7 +60,7 @@ bool Task::startHook()
 
 void Task::updateHook()
 {
-    PingStatus status = mDriver->Ping(_destination_id.get(), _msg_type.get());
+    PingStatus status = mDriver->Ping(destination_id,  msg_type);
     if (status.flag == 1) {
         auto rbs = convertToRBS(status);
         _pose.write(rbs);
