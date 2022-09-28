@@ -26,7 +26,8 @@ describe OroGen.usbl_seatrac.Task do
 
     it "interprets a ping response message from the device" do
         packet1 = raw_packet_from_s("$4000028015\r\n")
-        packet2 = raw_packet_from_s("$42020F0102010101010101010101010101010101010101010101010101010101010101010101010101010101010101016413\r\n")
+        packet2 = raw_packet_from_s("$42020F01020101010101010101010101010101010101010" \
+            "10101010101010101010101010101010101010101010101016413\r\n")
         response =
             expect_execution { syskit_write @raw_io.out_port, packet1, packet2 }
             .to { have_one_new_sample task.pose_port }
