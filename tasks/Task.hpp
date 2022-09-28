@@ -33,9 +33,10 @@ tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
     protected:
         std::unique_ptr<usbl_seatrac::Driver> mDriver;
 
-    private: 
-        usbl_seatrac::protocol::BeaconIdentificationCode destination_id;
-        usbl_seatrac::protocol::AcousticMessageType msg_type;
+    private:
+        usbl_seatrac::protocol::BeaconIdentificationCode mDestinationId;
+        usbl_seatrac::protocol::AcousticMessageType mMsgType;
+        void processIO();
 
     public:
         /** TaskContext constructor for Task
@@ -86,7 +87,6 @@ tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
          * it again. Finally, FatalError cannot be recovered.
          */
         void updateHook();
-        void processIO();
 
         /** This hook is called by Orocos when the component is in the
          * RunTimeError state, at each activity step. See the discussion in
