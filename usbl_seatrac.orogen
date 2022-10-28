@@ -9,6 +9,7 @@ using_task_library "iodrivers_base"
 
 using_library "usbl_seatrac"
 import_types_from "usbl_seatrac/Protocol.hpp"
+import_types_from "usbl_seatrac/Ping.hpp"
 
 # Driver task for USBL Seatrac X150/X010
 # The corresponding C++ class can be edited in tasks/Task.hpp and
@@ -23,6 +24,7 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
     property "msg_type", "usbl_seatrac/protocol/AcousticMessageType", "MSG_REQX"
 
     output_port("pose", "base/samples/RigidBodyState")
+    output_port("ping_status", "usbl_seatrac/PingStatus")
 
     periodic 0.1
 end
