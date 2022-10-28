@@ -32,7 +32,7 @@ describe OroGen.usbl_seatrac.Task do
             expect_execution { syskit_write @raw_io.out_port, packet1, packet2 }
             .to { have_one_new_sample task.pose_port }
         assert_equal(257, response.position.x)
-        assert_equal(257, response.position.y)
+        assert_equal(-257, response.position.y)
         assert_equal(-257, response.position.z)
     end
 
