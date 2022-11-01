@@ -1,17 +1,15 @@
 <package>
-  <description brief="Driver task for USBL Seatrac">
+  <description brief="Orogen component for USBL Seatrac">
   
   </description>
   <author>Debora Tahara Valverde/debora.tahara@tidewise.io</author>
   <license></license>
   <url>http://</url>
   <logo>http://</logo>
+  <depend package="orogen" />
   <depend package="base/cmake" />
-  <!--
-   To add any dependencies use the depend tag
-  <depend package="dummy-dependency-0" />
-	...
-  <depend package="dummy-dependency-n-1" />
-  <depend package="dummy-dependency-n" />
-  -->
+  <depend package="base/orogen/types" />
+  <depend package="drivers/orogen/iodrivers_base" />
+  <depend package="drivers/usbl_seatrac" />
+  <test_depend name="tools/syskit" />
 </package>
