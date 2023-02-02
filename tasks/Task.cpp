@@ -61,11 +61,13 @@ bool Task::startHook()
 
 void Task::updateHook()
 {
-    PingStatus status = mDriver->Ping(mDestinationId, mMsgType);
-    status.timestamp = base::Time::now();
-    _ping_status.write(status);
-    if (status.flag == 1) {
-        auto rbs = convertToRBS(status);
+    Status status = mDriver->autoStatus();
+    _local_pressure.write(status.environment.pressure);
+    PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
+    ping.timestamp = base::Time::now();
+    _ping_status.write(ping);
+    if (ping.flag == 1) {
+        auto rbs = convertToRBS(ping);
         _pose.write(rbs);
     }
         
