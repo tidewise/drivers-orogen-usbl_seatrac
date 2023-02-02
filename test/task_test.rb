@@ -47,4 +47,13 @@ describe OroGen.usbl_seatrac.Task do
             expect_execution { syskit_write @raw_io.out_port, packet1, packet2, packet3 }
             .to { have_no_new_sample task.pose_port, at_least_during: 0.5 }
     end
+
+    it "stop if there is no status packet from the device" do
+        packet1 = raw_packet_from_s("$4000028015\r\n")
+        packet2 = raw_packet_from_s("$42020F07020101010101010101010101010101010101010" \
+            "101010101010101010101010101010101010101010101010101B0\r\n")
+        response =
+            expect_execution { syskit_write @raw_io.out_port, packet1, packet2}
+            .to { have_no_new_sample task.pose_port, at_least_during: 0.5 }
+    end
 end
