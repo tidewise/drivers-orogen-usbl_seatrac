@@ -25,11 +25,13 @@ describe OroGen.usbl_seatrac.Task do
     end
 
     it "interprets a ping response message from the device" do
-        packet1 = raw_packet_from_s("$4000028015\r\n")
-        packet2 = raw_packet_from_s("$42020F01020101010101010101010101010101010101010" \
-            "10101010101010101010101010101010101010101010101016413\r\n")
+        packet1 = raw_packet_from_s("$1001B200000000000000010001000100000001000000010" \
+            "0B429\r\n$")
+        packet2 = raw_packet_from_s("$4000028015\r\n")
+        packet3 = raw_packet_from_s("$42020F07020101010101010101010101010101010101010" \
+            "101010101010101010101010101010101010101010101010101B0\r\n")
         response =
-            expect_execution { syskit_write @raw_io.out_port, packet1, packet2 }
+            expect_execution { syskit_write @raw_io.out_port, packet1, packet2, packet3 }
             .to { have_one_new_sample task.pose_port }
         assert_equal(257, response.position.x)
         assert_equal(-257, response.position.y)
@@ -37,10 +39,12 @@ describe OroGen.usbl_seatrac.Task do
     end
 
     it "interprets a ping error message from the device" do
-        packet1 = raw_packet_from_s("$4000028015\r\n")
-        packet2 = raw_packet_from_s("$43340266D5\r\n")
+        packet1 = raw_packet_from_s("$1001B200000000000000010001000100000001000000010" \
+            "0B429\r\n$")
+        packet2 = raw_packet_from_s("$4000028015\r\n")
+        packet3 = raw_packet_from_s("$43340266D5\r\n")
         response =
-            expect_execution { syskit_write @raw_io.out_port, packet1, packet2 }
+            expect_execution { syskit_write @raw_io.out_port, packet1, packet2, packet3 }
             .to { have_no_new_sample task.pose_port, at_least_during: 0.5 }
     end
 end
