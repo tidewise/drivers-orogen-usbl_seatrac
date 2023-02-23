@@ -6,6 +6,7 @@
 #include "usbl_seatrac/TaskBase.hpp"
 #include <usbl_seatrac/Driver.hpp>
 #include <base/samples/RigidBodyState.hpp>
+#include <base/samples/Pressure.hpp>
 
 
 namespace usbl_seatrac{
