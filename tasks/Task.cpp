@@ -5,6 +5,7 @@
 
 using namespace usbl_seatrac;
 using base::samples::RigidBodyState;
+using base::samples::Pressure;
 
 Task::Task(std::string const& name)
     : TaskBase(name)
@@ -61,11 +62,17 @@ bool Task::startHook()
 
 void Task::updateHook()
 {
-    PingStatus status = mDriver->Ping(mDestinationId, mMsgType);
-    status.timestamp = base::Time::now();
-    _ping_status.write(status);
-    if (status.flag == 1) {
-        auto rbs = convertToRBS(status);
+    Status status = mDriver->autoStatus();
+    Pressure pressure;
+    pressure.time = base::Time::now();
+    pressure.fromBar(pressure.time, status.environment.pressure);
+    _local_pressure.write(pressure);
+
+    PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
+    ping.timestamp = base::Time::now();
+    _ping_status.write(ping);
+    if (ping.flag == 1) {
+        auto rbs = convertToRBS(ping);
         _pose.write(rbs);
     }
         

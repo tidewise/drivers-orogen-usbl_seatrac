@@ -25,6 +25,7 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
 
     output_port("pose", "base/samples/RigidBodyState")
     output_port("ping_status", "usbl_seatrac/PingStatus")
+    output_port("local_pressure", "base/samples/Pressure")
 
     periodic 0.1
 end
