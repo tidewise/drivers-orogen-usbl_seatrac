@@ -21,9 +21,9 @@ static RigidBodyState convertToRBS(PingStatus const& data)
     RigidBodyState rbs;
 
     rbs.time = data.timestamp;
-    rbs.position = Eigen::Vector3d(data.response.acoustic_fix.position.north,
-        -data.response.acoustic_fix.position.east,
-        -data.response.acoustic_fix.position.depth);
+    rbs.position = Eigen::Vector3d(-data.response.acoustic_fix.position.north/10.0,
+        data.response.acoustic_fix.position.east/10.0,
+        -data.response.acoustic_fix.position.depth/10.0);
     return rbs;
 }
 
@@ -65,9 +65,9 @@ void Task::updateHook()
     Status status = mDriver->autoStatus();
     Pressure pressure;
     pressure.time = base::Time::now();
-    pressure.fromBar(pressure.time, status.environment.pressure);
+    pressure = pressure.fromBar(pressure.time, static_cast<float>(status.environment.pressure)/1000);
     _local_pressure.write(pressure);
-
+    
     PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
     ping.timestamp = base::Time::now();
     _ping_status.write(ping);
