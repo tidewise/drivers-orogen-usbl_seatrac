@@ -4,8 +4,8 @@
 #include <iodrivers_base/ConfigureGuard.hpp>
 
 using namespace usbl_seatrac;
-using base::samples::RigidBodyState;
 using base::samples::Pressure;
+using base::samples::RigidBodyState;
 
 Task::Task(std::string const& name)
     : TaskBase(name)
@@ -16,14 +16,26 @@ Task::~Task()
 {
 }
 
+static Eigen::Quaterniond convertToQuaterniond(PingStatus const& data)
+{
+    Eigen::Quaterniond attitude = Eigen::Quaterniond(
+        Eigen::AngleAxisd(data.response.acoustic_fix.attitude_roll / 10. / 180.0 * M_PI,
+            Eigen::Vector3d::UnitX()) *
+        Eigen::AngleAxisd(data.response.acoustic_fix.attitude_pitch / 10. / 180.0 * M_PI,
+            Eigen::Vector3d::UnitY()) *
+        Eigen::AngleAxisd(data.response.acoustic_fix.attitude_yaw / 10. / 180.0 * M_PI,
+            Eigen::Vector3d::UnitZ()));
+    return attitude;
+}
+
 static RigidBodyState convertToRBS(PingStatus const& data)
 {
     RigidBodyState rbs;
 
     rbs.time = data.timestamp;
-    rbs.position = Eigen::Vector3d(-data.response.acoustic_fix.position.north/10.0,
-        data.response.acoustic_fix.position.east/10.0,
-        -data.response.acoustic_fix.position.depth/10.0);
+    rbs.position = Eigen::Vector3d(data.response.acoustic_fix.position.north / 10.0,
+        data.response.acoustic_fix.position.east / 10.0,
+        data.response.acoustic_fix.position.depth / 10.0);
     return rbs;
 }
 
@@ -65,17 +77,21 @@ void Task::updateHook()
     Status status = mDriver->autoStatus();
     Pressure pressure;
     pressure.time = base::Time::now();
-    pressure = pressure.fromBar(pressure.time, static_cast<float>(status.environment.pressure)/1000);
+    pressure = pressure.fromBar(pressure.time,
+        static_cast<float>(status.environment.pressure) / 1000);
     _local_pressure.write(pressure);
-    
+
     PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
     ping.timestamp = base::Time::now();
     _ping_status.write(ping);
     if (ping.flag == 1) {
         auto rbs = convertToRBS(ping);
-        _pose.write(rbs);
+        _local_pose.write(rbs);
+        auto attitude = convertToQuaterniond(ping);
+        rbs.position = attitude * rbs.position;
+        _global_pose.write(rbs);
     }
-        
+
     TaskBase::updateHook();
 }
 
