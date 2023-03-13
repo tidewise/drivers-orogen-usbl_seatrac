@@ -4,8 +4,8 @@
 #include <iodrivers_base/ConfigureGuard.hpp>
 
 using namespace usbl_seatrac;
-using base::samples::RigidBodyState;
 using base::samples::Pressure;
+using base::samples::RigidBodyState;
 
 Task::Task(std::string const& name)
     : TaskBase(name)
@@ -18,12 +18,16 @@ Task::~Task()
 
 static RigidBodyState convertToRBS(PingStatus const& data)
 {
+    Eigen::Quaterniond attitude =
+        Eigen::Quaterniond(Eigen::AngleAxisd(-data.response.acoustic_fix.attitude_yaw / 10. / 180.0 * M_PI + M_PI,
+            Eigen::Vector3d::UnitZ()));
     RigidBodyState rbs;
 
     rbs.time = data.timestamp;
-    rbs.position = Eigen::Vector3d(-data.response.acoustic_fix.position.north/10.0,
-        data.response.acoustic_fix.position.east/10.0,
-        -data.response.acoustic_fix.position.depth/10.0);
+    rbs.position = Eigen::Vector3d(-data.response.acoustic_fix.position.north / 10.0,
+        data.response.acoustic_fix.position.east / 10.0,
+        -data.response.acoustic_fix.position.depth / 10.0);
+    rbs.position = attitude * rbs.position;
     return rbs;
 }
 
@@ -65,9 +69,10 @@ void Task::updateHook()
     Status status = mDriver->autoStatus();
     Pressure pressure;
     pressure.time = base::Time::now();
-    pressure = pressure.fromBar(pressure.time, static_cast<float>(status.environment.pressure)/1000);
+    pressure = pressure.fromBar(pressure.time,
+        static_cast<float>(status.environment.pressure) / 1000);
     _local_pressure.write(pressure);
-    
+
     PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
     ping.timestamp = base::Time::now();
     _ping_status.write(ping);
@@ -75,7 +80,7 @@ void Task::updateHook()
         auto rbs = convertToRBS(ping);
         _pose.write(rbs);
     }
-        
+
     TaskBase::updateHook();
 }
 
