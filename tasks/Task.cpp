@@ -61,6 +61,28 @@ bool Task::configureHook()
 
     mDriver = move(driver);
     guard.commit();
+
+    // Set initial settings
+    message::Frame old_settings = mDriver->getSettings();
+    SettingsGet get = parseGetSettings(old_settings.payload);
+    protocol::Settings new_settings = get.settings;
+
+    uint8_t enviromental_flags = _auto_vos.get() | (_auto_pressure_ofs.get() << 1);
+    uint8_t ahrs_flags = _auto_cal_mag.get();
+    uint8_t xcvr_flags = (_usbl_use_ahrs.get()) | (_xcvr_posflt_enable.get() << 1) |
+                         (_xcvr_tx_msgctrl.get() << 3) | (_xcvr_usbl_msgs.get() << 5) |
+                         (_xcvr_fix_msgs.get() << 6) | (_xcvr_diag_msgs.get() << 7);
+
+    new_settings.enviromental_flags = enviromental_flags;
+    new_settings.ahrs_flags = ahrs_flags;
+    new_settings.xcvr_flags = xcvr_flags;
+    new_settings.xcvr_range_tmo = static_cast<uint16_t>(_xcvr_range_tmo.get());
+    new_settings.xcvr_resp_time =
+        static_cast<uint16_t>(_xcvr_resp_time.get().toMilliseconds());
+    new_settings.xcvr_posflt_tmo =
+        static_cast<uint16_t>(_xcvr_posflt_tmo.get().toSeconds());
+    new_settings.xcvr_beacon_id = _xcvr_beacon_id.get();
+    mDriver->setSettings(new_settings);
     return true;
 }
 
