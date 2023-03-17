@@ -54,6 +54,9 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
     # Maximum time that a beacon is not communicated with before its position filter
     # is reset
     property "xcvr_posflt_tmo", "base/Time"
+    # How often periodic status output messages are generated
+    property "status_mode",  "usbl_seatrac/protocol/StatusMode",
+             "STATUS_MODE_2HZ5"
 
     # USBL Local Relative Position Coordinates
     output_port("pose", "base/samples/RigidBodyState")

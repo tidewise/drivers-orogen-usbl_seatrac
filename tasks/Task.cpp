@@ -67,12 +67,14 @@ bool Task::configureHook()
     SettingsGet get = parseGetSettings(old_settings.payload);
     protocol::Settings new_settings = get.settings;
 
+    uint8_t status_flags = _status_mode.get();
     uint8_t enviromental_flags = _auto_vos.get() | (_auto_pressure_ofs.get() << 1);
     uint8_t ahrs_flags = _auto_cal_mag.get();
     uint8_t xcvr_flags = (_usbl_use_ahrs.get()) | (_xcvr_posflt_enable.get() << 1) |
                          (_xcvr_tx_msgctrl.get() << 3) | (_xcvr_usbl_msgs.get() << 5) |
                          (_xcvr_fix_msgs.get() << 6) | (_xcvr_diag_msgs.get() << 7);
 
+    new_settings.status_flags = status_flags;
     new_settings.enviromental_flags = enviromental_flags;
     new_settings.ahrs_flags = ahrs_flags;
     new_settings.xcvr_flags = xcvr_flags;
