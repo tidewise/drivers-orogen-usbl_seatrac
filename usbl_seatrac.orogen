@@ -25,8 +25,6 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
 
     # USBL Local Relative Position Coordinates
     output_port("pose", "base/samples/RigidBodyState")
-    # USBL World Relative Position Coordinates
-    output_port("global_pose", "base/samples/RigidBodyState")
     output_port("local_attitude", "base/Quaterniond")
     output_port("local_pressure", "base/samples/Pressure")
     output_port("ping_status", "usbl_seatrac/PingStatus")

@@ -34,25 +34,21 @@ describe OroGen.usbl_seatrac.Task do
             expect_execution { syskit_write @raw_io.out_port, packet1, packet2, packet3 }
             .to do
                 [
-                    have_one_new_sample(task.local_pose_port),
-                    have_one_new_sample(task.global_pose_port),
+                    have_one_new_sample(task.pose_port),
                     have_one_new_sample(task.ping_status_port)
                 ]
             end
-        assert_equal(25.7, response[0].position.x)
-        assert_equal(25.7, response[0].position.y)
-        assert_equal(25.7, response[0].position.z)
 
-        assert_in_delta(21.96, response[1].position.x, 1)
-        assert_in_delta(23.12, response[1].position.y, 1)
-        assert_in_delta(31.04, response[1].position.z, 1)
+        assert_in_delta(21.96, response[0].position.x, 1)
+        assert_in_delta(23.12, response[0].position.y, 1)
+        assert_in_delta(31.04, response[0].position.z, 1)
 
-        assert_equal(257, response[2].response.acoustic_fix.position.north)
-        assert_equal(257, response[2].response.acoustic_fix.position.east)
-        assert_equal(257, response[2].response.acoustic_fix.position.depth)
-        assert_equal(257, response[2].response.acoustic_fix.attitude_yaw)
-        assert_equal(257, response[2].response.acoustic_fix.attitude_pitch)
-        assert_equal(257, response[2].response.acoustic_fix.attitude_roll)
+        assert_equal(257, response[1].response.acoustic_fix.position.north)
+        assert_equal(257, response[1].response.acoustic_fix.position.east)
+        assert_equal(257, response[1].response.acoustic_fix.position.depth)
+        assert_equal(257, response[1].response.acoustic_fix.attitude_yaw)
+        assert_equal(257, response[1].response.acoustic_fix.attitude_pitch)
+        assert_equal(257, response[1].response.acoustic_fix.attitude_roll)
     end
 
     it "interprets a ping error message from the device" do
@@ -62,7 +58,7 @@ describe OroGen.usbl_seatrac.Task do
         packet3 = raw_packet_from_s("$43340266D5\r\n")
         response =
             expect_execution { syskit_write @raw_io.out_port, packet1, packet2, packet3 }
-            .to { have_no_new_sample task.local_pose_port, at_least_during: 0.5 }
+            .to { have_no_new_sample task.pose_port, at_least_during: 0.5 }
     end
 
     it "stop if there is no status packet from the device" do
@@ -71,6 +67,6 @@ describe OroGen.usbl_seatrac.Task do
             "101010101010101010101010101010101010101010101010101B0\r\n")
         response =
             expect_execution { syskit_write @raw_io.out_port, packet1, packet2}
-            .to { have_no_new_sample task.local_pose_port, at_least_during: 0.5 }
+            .to { have_no_new_sample task.pose_port, at_least_during: 0.5 }
     end
 end

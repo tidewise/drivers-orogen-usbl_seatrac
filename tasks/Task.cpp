@@ -86,11 +86,10 @@ void Task::updateHook()
     _ping_status.write(ping);
     if (ping.flag == 1) {
         auto rbs = convertToRBS(ping);
-        _pose.write(rbs);
         auto attitude = convertToQuaterniond(ping);
         _local_attitude.write(attitude);
         rbs.position = attitude * rbs.position;
-        _global_pose.write(rbs);
+        _pose.write(rbs);
     }
 
     TaskBase::updateHook();
