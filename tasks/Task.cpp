@@ -63,9 +63,7 @@ bool Task::configureHook()
     guard.commit();
 
     // Set initial settings
-    message::Frame old_settings = mDriver->getSettings();
-    SettingsGet get = parseGetSettings(old_settings.payload);
-    protocol::Settings new_settings = get.settings;
+    protocol::Settings new_settings = mDriver->getSettingsProtocol();
 
     uint8_t status_flags = _status_mode.get();
     uint8_t enviromental_flags = _auto_vos.get() | (_auto_pressure_ofs.get() << 1);
@@ -84,7 +82,7 @@ bool Task::configureHook()
     new_settings.xcvr_posflt_tmo =
         static_cast<uint16_t>(_xcvr_posflt_tmo.get().toSeconds());
     new_settings.xcvr_beacon_id = _xcvr_beacon_id.get();
-    mDriver->setSettings(new_settings);
+    mDriver->setSettingsProtocol(new_settings);
     return true;
 }
 
