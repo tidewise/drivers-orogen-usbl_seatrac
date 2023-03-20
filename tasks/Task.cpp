@@ -16,6 +16,7 @@ Task::~Task()
 {
 }
 
+// Temporário
 static Eigen::Quaterniond convertToQuaterniond(PingStatus const& data)
 {
     Eigen::Quaterniond attitude = Eigen::Quaterniond(
@@ -26,6 +27,21 @@ static Eigen::Quaterniond convertToQuaterniond(PingStatus const& data)
         Eigen::AngleAxisd(data.response.acoustic_fix.attitude_yaw / 10. / 180.0 * M_PI,
             Eigen::Vector3d::UnitZ()));
     return attitude;
+}
+
+static RigidBodyState convertToRBS(Status const& data)
+{
+    RigidBodyState rbs;
+    rbs.time = data.timestamp;
+    rbs.position = Eigen::Vector3d(0, 0, data.environment.depth / 10.);
+    rbs.orientation = Eigen::Quaterniond(
+        Eigen::AngleAxisd(data.attitude.roll / 10. / 180.0 * M_PI,
+            Eigen::Vector3d::UnitX()) *
+        Eigen::AngleAxisd(data.attitude.pitch / 10. / 180.0 * M_PI,
+            Eigen::Vector3d::UnitY()) *
+        Eigen::AngleAxisd(data.attitude.yaw / 10. / 180.0 * M_PI,
+            Eigen::Vector3d::UnitZ()));
+    return rbs;
 }
 
 static RigidBodyState convertToRBS(PingStatus const& data)
@@ -97,21 +113,21 @@ bool Task::startHook()
 void Task::updateHook()
 {
     Status status = mDriver->autoStatus();
-    Pressure pressure;
-    pressure.time = base::Time::now();
-    pressure = pressure.fromBar(pressure.time,
-        static_cast<float>(status.environment.pressure) / 1000);
-    _local_pressure.write(pressure);
+    auto rbs_reference = convertToRBS(status);
+    _usbl_pose.write(rbs_reference);
 
     PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
     ping.timestamp = base::Time::now();
     _ping_status.write(ping);
+
     if (ping.flag == 1) {
         auto rbs = convertToRBS(ping);
-        auto attitude = convertToQuaterniond(ping);
-        _local_attitude.write(attitude);
-        rbs.position = attitude * rbs.position;
         _pose.write(rbs);
+
+        // Temporário
+        auto attitude = convertToQuaterniond(ping);
+        rbs.position = attitude * rbs.position;
+        _local_pose.write(rbs);
     }
 
     TaskBase::updateHook();

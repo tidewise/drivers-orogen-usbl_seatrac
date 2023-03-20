@@ -58,10 +58,13 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
     property "status_mode",  "usbl_seatrac/protocol/StatusMode",
              "STATUS_MODE_2HZ5"
 
-    # USBL Local Relative Position Coordinates
+    # USBL World Relative Position Coordinates
     output_port("pose", "base/samples/RigidBodyState")
-    output_port("local_attitude", "base/Quaterniond")
-    output_port("local_pressure", "base/samples/Pressure")
+    # USBL Local Relative Position Coordinates (Temporário)
+    output_port("local_pose", "base/samples/RigidBodyState")
+    # USBL Beacon X150  - z = local_pressure , orientation = local_attitude
+    output_port("usbl_pose", "base/samples/RigidBodyState")
+    
     output_port("ping_status", "usbl_seatrac/PingStatus")
 
     periodic 0.1
