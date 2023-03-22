@@ -21,11 +21,11 @@ static Eigen::Quaterniond convertToQuaterniond(PingStatus const& data)
 {
     Eigen::Quaterniond attitude = Eigen::Quaterniond(
         Eigen::AngleAxisd(data.response.acoustic_fix.attitude_yaw / 10. / 180.0 * M_PI,
-            Eigen::Vector3d::UnitX()) *
+            Eigen::Vector3d::UnitZ()) *
         Eigen::AngleAxisd(data.response.acoustic_fix.attitude_pitch / 10. / 180.0 * M_PI,
             Eigen::Vector3d::UnitY()) *
         Eigen::AngleAxisd(data.response.acoustic_fix.attitude_roll / 10. / 180.0 * M_PI,
-            Eigen::Vector3d::UnitZ()));
+            Eigen::Vector3d::UnitX()));
     return attitude;
 }
 
