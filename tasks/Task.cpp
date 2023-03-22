@@ -16,19 +16,6 @@ Task::~Task()
 {
 }
 
-// Temporário
-static Eigen::Quaterniond convertToQuaterniond(PingStatus const& data)
-{
-    Eigen::Quaterniond attitude = Eigen::Quaterniond(
-        Eigen::AngleAxisd(data.response.acoustic_fix.attitude_yaw / 10. / 180.0 * M_PI,
-            Eigen::Vector3d::UnitZ()) *
-        Eigen::AngleAxisd(data.response.acoustic_fix.attitude_pitch / 10. / 180.0 * M_PI,
-            Eigen::Vector3d::UnitY()) *
-        Eigen::AngleAxisd(data.response.acoustic_fix.attitude_roll / 10. / 180.0 * M_PI,
-            Eigen::Vector3d::UnitX()));
-    return attitude;
-}
-
 static RigidBodyState convertToRBS(Status const& data)
 {
     RigidBodyState rbs;
@@ -124,11 +111,6 @@ void Task::updateHook()
 
     if (ping.flag == 1) {
         auto rbs = convertToRBS(ping);
-        _pose.write(rbs);
-
-        // Temporário
-        auto attitude = convertToQuaterniond(ping);
-        rbs.position = attitude * rbs.position;
         _local_pose.write(rbs);
     }
 
