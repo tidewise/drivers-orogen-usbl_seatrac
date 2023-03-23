@@ -73,8 +73,7 @@ void Task::configureUSBLSettings(
     new_settings.ahrs_flags = ahrs_flags;
     new_settings.xcvr_flags = xcvr_flags;
     new_settings.xcvr_range_tmo = static_cast<uint16_t>(xcvr_range_tmo);
-    new_settings.xcvr_resp_time =
-        static_cast<uint16_t>(xcvr_resp_time.toMilliseconds());
+    new_settings.xcvr_resp_time = static_cast<uint16_t>(xcvr_resp_time.toMilliseconds());
     new_settings.xcvr_posflt_tmo = static_cast<uint16_t>(xcvr_posflt_tmo.toSeconds());
     new_settings.xcvr_beacon_id = xcvr_beacon_id;
     mDriver->setSettingsProtocol(new_settings);
@@ -103,26 +102,26 @@ bool Task::configureHook()
     mDriver = move(driver);
     guard.commit();
 
+    configureUSBLSettings(_xcvr_beacon_id.get(),
+        _xcvr_tx_msgctrl.get(),
+        _status_mode.get(),
+        _xcvr_resp_time.get(),
+        _xcvr_posflt_tmo.get(),
+        _auto_vos.get(),
+        _auto_pressure_ofs.get(),
+        _auto_cal_mag.get(),
+        _usbl_use_ahrs.get(),
+        _xcvr_posflt_enable.get(),
+        _xcvr_usbl_msgs.get(),
+        _xcvr_fix_msgs.get(),
+        _xcvr_diag_msgs.get(),
+        _xcvr_range_tmo.get());
+
     return true;
 }
 
 bool Task::startHook()
 {
-    configureUSBLSettings(_xcvr_beacon_id.get(),
-    _xcvr_tx_msgctrl.get(),
-    _status_mode.get(),
-    _xcvr_resp_time.get(),
-    _xcvr_posflt_tmo.get(),
-    _auto_vos.get(),
-    _auto_pressure_ofs.get(),
-    _auto_cal_mag.get(),
-    _usbl_use_ahrs.get(),
-    _xcvr_posflt_enable.get(),
-    _xcvr_usbl_msgs.get(),
-    _xcvr_fix_msgs.get(),
-    _xcvr_diag_msgs.get(),
-    _xcvr_range_tmo.get());
-
     if (!TaskBase::startHook()) {
         return false;
     }

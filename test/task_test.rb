@@ -134,8 +134,8 @@ describe OroGen.usbl_seatrac.Task do
         set_cmd = expect_execution { writer.write get_reply }
                   .join_all_waiting_work(false)
                   .to { have_one_new_sample task.io_raw_out_port }
-        expect_execution { writer.write set_reply }
-            .to { emit task.start_event }
+        execute { writer.write set_reply }
+        syskit_configure_and_start(@task)
         set_cmd
     end
     # rubocop: enable Metrics/AbcSize
