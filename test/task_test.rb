@@ -41,6 +41,11 @@ describe OroGen.usbl_seatrac.Task do
         it "updates the settings for the parameters it controls" do
             set_cmd = usbl_configure_and_start(raw_io, task)
             # Verify the structure of set_cmd
+            expected_packet = raw_packet_from_s("#16023F0D0D000000000000FA01A8C00000FFFF"\
+                "0101A8C00101A8C0A41F014F0000005E012B3C00FCFEFFFEE4FEE900F800F60001405C2"\
+                "EC1D4B358C22B3C4543F2C5833FE27C7E3FB5257A3F777E8942AE22D140000000000000"\
+                "000000000000630F2C010A00000000000000030A3C7680\r\n")
+            assert_equal(set_cmd.data, expected_packet.data)
         end
     end
 
