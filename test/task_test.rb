@@ -111,18 +111,21 @@ describe OroGen.usbl_seatrac.Task do
         end
     end
 
-    def usbl_configure_and_start(raw_io, task)
+    def usbl_configure_and_start(raw_io, task) # rubocop: disable Metrics/AbcSize
         get_reply = raw_packet_from_s("$15023F0D0D000000000000FA01A8C00000FFFF0101A8C"\
             "00101A8C0A41F014F0000005E012B3C00FCFEFFFEE4FEE900F800F600FF405C2EC1D4B358C2"\
             "2B3C4543F2C5833FE27C7E3FB5257A3F777E8942AE22D140000000000000000000000000630"\
             "F64000A00000000000000030A3C3DB9\r\n")
         set_reply = raw_packet_from_s("$16000E60\r\n")
         # Prepare the sample you want to send
-        writer = syskit_create_writer @raw_io.out_port
+        writer = syskit_create_writer raw_io.out_port
         get_cmd = expect_execution.scheduler(true)
             .join_all_waiting_work(false)
             .to { have_one_new_sample task.io_raw_out_port }
         # check that get_cmd is actually a get command
+        get_request = raw_packet_from_s("#15C1CF\r\n")
+        assert_equal(get_request.data, get_cmd.data)
+
         set_cmd = expect_execution { writer.write get_reply }
             .join_all_waiting_work(false)
             .to { have_one_new_sample task.io_raw_out_port }
