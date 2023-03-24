@@ -16,7 +16,7 @@ Task::~Task()
 {
 }
 
-static RigidBodyState convertToRBS(Status const& data)
+static RigidBodyState convertToZWithOrientationRBS(Status const& data)
 {
     RigidBodyState rbs;
     rbs.time = data.timestamp;
@@ -31,7 +31,7 @@ static RigidBodyState convertToRBS(Status const& data)
     return rbs;
 }
 
-static RigidBodyState convertToRBS(PingStatus const& data)
+static RigidBodyState convertToPositionRBS(PingStatus const& data)
 {
     RigidBodyState rbs;
 
@@ -131,7 +131,7 @@ bool Task::startHook()
 void Task::updateHook()
 {
     Status status = mDriver->autoStatus();
-    auto rbs_reference = convertToRBS(status);
+    auto rbs_reference = convertToZWithOrientationRBS(status);
     _transceiver_pose.write(rbs_reference);
 
     PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
@@ -139,7 +139,7 @@ void Task::updateHook()
     _ping_status.write(ping);
 
     if (ping.flag == 1) {
-        auto rbs = convertToRBS(ping);
+        auto rbs = convertToPositionRBS(ping);
         _transponder_pose.write(rbs);
     }
 
