@@ -132,7 +132,7 @@ void Task::updateHook()
 {
     Status status = mDriver->autoStatus();
     auto rbs_reference = convertToRBS(status);
-    _usbl_pose.write(rbs_reference);
+    _transceiver_pose.write(rbs_reference);
 
     PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
     ping.timestamp = base::Time::now();
@@ -140,7 +140,7 @@ void Task::updateHook()
 
     if (ping.flag == 1) {
         auto rbs = convertToRBS(ping);
-        _local_pose.write(rbs);
+        _transponder_pose.write(rbs);
     }
 
     TaskBase::updateHook();
