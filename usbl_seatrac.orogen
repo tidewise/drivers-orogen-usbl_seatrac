@@ -59,7 +59,7 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
              "STATUS_MODE_2HZ5"
 
     # USBL Local Relative Position Coordinates
-    output_port("transponder_pose", "base/samples/RigidBodyState")
+    output_port("remote2local_pose", "base/samples/RigidBodyState")
     # USBL Beacon X150  - z = local_depth , orientation = local_attitude
     output_port("transceiver_pose", "base/samples/RigidBodyState")
     output_port("ping_status", "usbl_seatrac/PingStatus")

@@ -140,7 +140,7 @@ void Task::updateHook()
 
     if (ping.flag == 1) {
         auto rbs = convertToPositionRBS(ping);
-        _transponder_pose.write(rbs);
+        _remote2local_pose.write(rbs);
     }
 
     TaskBase::updateHook();
