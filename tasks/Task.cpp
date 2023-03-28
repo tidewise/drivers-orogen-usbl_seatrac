@@ -20,7 +20,7 @@ static RigidBodyState convertToZWithOrientationRBS(Status const& data)
 {
     RigidBodyState rbs;
     rbs.time = data.timestamp;
-    rbs.position = Eigen::Vector3d(0, 0, data.environment.depth / 10.);
+    rbs.position = Eigen::Vector3d(NAN, NAN, data.environment.depth / 10.);
     rbs.orientation =
         Eigen::Quaterniond(Eigen::AngleAxisd(data.attitude.yaw / 10. / 180.0 * M_PI,
                                Eigen::Vector3d::UnitZ()) *
@@ -132,7 +132,7 @@ void Task::updateHook()
 {
     Status status = mDriver->autoStatus();
     auto rbs_reference = convertToZWithOrientationRBS(status);
-    _transceiver_pose.write(rbs_reference);
+    _local2nwu_orientation_with_z.write(rbs_reference);
 
     PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
     ping.timestamp = base::Time::now();
@@ -140,7 +140,7 @@ void Task::updateHook()
 
     if (ping.flag == 1) {
         auto rbs = convertToPositionRBS(ping);
-        _remote2local_pose.write(rbs);
+        _remote2local_position.write(rbs);
     }
 
     TaskBase::updateHook();
