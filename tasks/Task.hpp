@@ -4,17 +4,19 @@
 #define USBL_SEATRAC_TASK_TASK_HPP
 
 #include "usbl_seatrac/TaskBase.hpp"
-#include <usbl_seatrac/Driver.hpp>
-#include <base/samples/RigidBodyState.hpp>
 #include <base/samples/Pressure.hpp>
+#include <base/samples/RigidBodyState.hpp>
+#include <usbl_seatrac/Driver.hpp>
 
-
-namespace usbl_seatrac{
+namespace usbl_seatrac {
 
     /*! \class Task
-     * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
-     * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
-     * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
+     * \brief The task context provides and requires services. It uses an ExecutionEngine
+to perform its functions.
+     * Essential interfaces are operations, data flow ports and properties. These
+interfaces have been defined using the oroGen specification.
+     * In order to modify the interfaces you should (re)use oroGen and rely on the
+associated workflow.
      * Declare a new task context (i.e., a component)
 
 The corresponding C++ class can be edited in tasks/Task.hpp and
@@ -26,11 +28,12 @@ tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
          task('custom_task_name','usbl_seatrac::Task')
      end
      \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument.
+     *  It can be dynamically adapted when the deployment is called with a prefix
+argument.
      */
-    class Task : public TaskBase
-    {
-	friend class TaskBase;
+    class Task : public TaskBase {
+        friend class TaskBase;
+
     protected:
         std::unique_ptr<usbl_seatrac::Driver> mDriver;
 
@@ -41,14 +44,15 @@ tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
 
     public:
         /** TaskContext constructor for Task
-         * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
-         * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
+         * \param name Name of the task. This name needs to be unique to make it
+         * identifiable via nameservices. \param initial_state The initial TaskState of
+         * the TaskContext. Default is Stopped state.
          */
         Task(std::string const& name = "usbl_seatrac::Task");
 
         /** Default deconstructor of Task
          */
-	~Task();
+        ~Task();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -107,8 +111,26 @@ tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
          * before calling start() again.
          */
         void cleanupHook();
+
+        /** This configures the USBL settings using get and set protocols with the usbl
+         * based on the given proprierty parameters
+         */
+        void configureUSBLSettings(
+            usbl_seatrac::protocol::BeaconIdentificationCode xcvr_beacon_id,
+            usbl_seatrac::protocol::TxMessageControl xcvr_tx_msgctrl,
+            usbl_seatrac::protocol::StatusMode status_mode,
+            base::Time xcvr_resp_time,
+            base::Time xcvr_posflt_tmo,
+            bool auto_vos,
+            bool auto_pressure_ofs,
+            bool auto_cal_mag,
+            bool usbl_use_ahrs,
+            bool xcvr_posflt_enable,
+            bool xcvr_usbl_msgs,
+            bool xcvr_fix_msgs,
+            bool xcvr_diag_msgs,
+            float xcvr_range_tmo);
     };
 }
 
 #endif
-
