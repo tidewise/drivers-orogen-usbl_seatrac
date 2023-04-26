@@ -16,17 +16,17 @@ Task::~Task()
 {
 }
 
-static RigidBodyState convertToZWithOrientationRBS(Status const& data)
+static RigidBodyState convertToZWithOrientationRBS(PingStatus const& ping_data)
 {
     RigidBodyState rbs;
-    rbs.time = data.timestamp;
-    rbs.position = Eigen::Vector3d(NAN, NAN, data.environment.depth / 10.);
+    rbs.time = ping_data.timestamp;
+    rbs.position = Eigen::Vector3d(NAN, NAN, ping_data.response.acoustic_fix.depth_local / 10.);
     rbs.orientation =
-        Eigen::Quaterniond(Eigen::AngleAxisd(data.attitude.yaw / 10. / 180.0 * M_PI,
+        Eigen::Quaterniond(Eigen::AngleAxisd(ping_data.response.acoustic_fix.attitude_yaw / 10. / 180.0 * M_PI,
                                Eigen::Vector3d::UnitZ()) *
-                           Eigen::AngleAxisd(data.attitude.pitch / 10. / 180.0 * M_PI,
+                           Eigen::AngleAxisd(ping_data.response.acoustic_fix.attitude_pitch / 10. / 180.0 * M_PI,
                                Eigen::Vector3d::UnitY()) *
-                           Eigen::AngleAxisd(data.attitude.roll / 10. / 180.0 * M_PI,
+                           Eigen::AngleAxisd(ping_data.response.acoustic_fix.attitude_roll / 10. / 180.0 * M_PI,
                                Eigen::Vector3d::UnitX()));
     return rbs;
 }
@@ -130,17 +130,15 @@ bool Task::startHook()
 
 void Task::updateHook()
 {
-    Status status = mDriver->autoStatus();
-    auto rbs_reference = convertToZWithOrientationRBS(status);
-    _local2nwu_orientation_with_z.write(rbs_reference);
-
     PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
     ping.timestamp = base::Time::now();
     _ping_status.write(ping);
 
     if (ping.flag == 1) {
         auto rbs = convertToPositionRBS(ping);
+        auto rbs_reference = convertToZWithOrientationRBS(ping);
         _remote2local_position.write(rbs);
+        _local2nwu_orientation_with_z.write(rbs_reference);
     }
 
     TaskBase::updateHook();
