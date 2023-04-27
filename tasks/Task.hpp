@@ -40,6 +40,15 @@ argument.
     private:
         usbl_seatrac::protocol::BeaconIdentificationCode mDestinationId;
         usbl_seatrac::protocol::AcousticMessageType mMsgType;
+        /**
+         * The ping's refresh rate
+         */
+        base::Time m_ping_refresh_rate;
+        /**
+         * The previous time where a ping was done
+         */
+        base::Time m_previous_ping_refresh_time;
+        
         void processIO();
 
     public:

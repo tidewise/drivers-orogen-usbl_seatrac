@@ -98,7 +98,7 @@ bool Task::configureHook()
     if (!TaskBase::configureHook()) {
         return false;
     }
-
+    m_ping_refresh_rate = _ping_refresh_rate.get();
     mDriver = move(driver);
     guard.commit();
 
@@ -134,13 +134,17 @@ void Task::updateHook()
     auto rbs_reference = convertToZWithOrientationRBS(status);
     _local2nwu_orientation_with_z.write(rbs_reference);
 
-    PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
-    ping.timestamp = base::Time::now();
-    _ping_status.write(ping);
+    if (base::Time::now() - m_previous_ping_refresh_time > m_ping_refresh_rate) {
+        m_previous_ping_refresh_time = base::Time::now();
 
-    if (ping.flag == 1) {
-        auto rbs = convertToPositionRBS(ping);
-        _remote2local_position.write(rbs);
+        PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
+        ping.timestamp = base::Time::now();
+        _ping_status.write(ping);
+
+        if (ping.flag == 1) {
+            auto rbs = convertToPositionRBS(ping);
+            _remote2local_position.write(rbs);
+        }
     }
 
     TaskBase::updateHook();
