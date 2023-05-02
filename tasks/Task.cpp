@@ -1,7 +1,6 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "Task.hpp"
-#include "usbl_seatrac/usbl_seatracTypes.hpp"
 #include <iodrivers_base/ConfigureGuard.hpp>
 
 using namespace usbl_seatrac;
