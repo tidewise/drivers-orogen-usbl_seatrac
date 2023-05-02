@@ -8,6 +8,12 @@
 #include <base/samples/RigidBodyState.hpp>
 #include <usbl_seatrac/Driver.hpp>
 
+/**
+ * The minimum ping refresh rate in case it will need the local usbl's orientation
+ * information
+ */
+static const base::Time MINIMUM_PING_STATUS_REFRESH_TIME = base::Time::fromSeconds(2.4);
+
 namespace usbl_seatrac {
 
     /*! \class Task
@@ -41,14 +47,18 @@ argument.
         usbl_seatrac::protocol::BeaconIdentificationCode mDestinationId;
         usbl_seatrac::protocol::AcousticMessageType mMsgType;
         /**
-         * The ping's refresh rate
+         * The ping's refresh period
          */
-        base::Time m_ping_refresh_rate;
+        base::Time m_ping_refresh_period;
         /**
          * The previous time where a ping was done
          */
         base::Time m_previous_ping_refresh_time;
-        
+        /**
+         * If it outputs the orientation
+         */
+        bool m_orientation_output_flag;
+
         void processIO();
 
     public:

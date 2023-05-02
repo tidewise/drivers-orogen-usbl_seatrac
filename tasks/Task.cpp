@@ -1,6 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "Task.hpp"
+#include "usbl_seatrac/usbl_seatracTypes.hpp"
 #include <iodrivers_base/ConfigureGuard.hpp>
 
 using namespace usbl_seatrac;
@@ -16,19 +17,17 @@ Task::~Task()
 {
 }
 
-static RigidBodyState convertToZWithOrientationRBS(Status const& data)
+static Eigen::Quaterniond convertToOrientationQuaterniond(Status const& data)
 {
-    RigidBodyState rbs;
-    rbs.time = data.timestamp;
-    rbs.position = Eigen::Vector3d(NAN, NAN, data.environment.depth / 10.);
-    rbs.orientation =
+    Eigen::Quaterniond orientation =
         Eigen::Quaterniond(Eigen::AngleAxisd(data.attitude.yaw / 10. / 180.0 * M_PI,
                                Eigen::Vector3d::UnitZ()) *
                            Eigen::AngleAxisd(data.attitude.pitch / 10. / 180.0 * M_PI,
                                Eigen::Vector3d::UnitY()) *
                            Eigen::AngleAxisd(data.attitude.roll / 10. / 180.0 * M_PI,
                                Eigen::Vector3d::UnitX()));
-    return rbs;
+
+    return orientation;
 }
 
 static RigidBodyState convertToPositionRBS(PingStatus const& data)
@@ -92,13 +91,23 @@ bool Task::configureHook()
     }
     setDriver(driver.get());
 
-    mDestinationId = _destination_id.get();
-    mMsgType = _msg_type.get();
-
     if (!TaskBase::configureHook()) {
         return false;
     }
-    m_ping_refresh_rate = _ping_refresh_rate.get();
+
+    mDestinationId = _destination_id.get();
+    mMsgType = _msg_type.get();
+    m_orientation_output_flag = _orientation_output_flag.get();
+    m_ping_refresh_period = _ping_refresh_period.get();
+
+    if (m_orientation_output_flag &&
+        MINIMUM_PING_STATUS_REFRESH_TIME > m_ping_refresh_period) {
+        LOG_ERROR_S << "If an orientation is required, because of hardware limitations, "
+                       "the minimum ping refresh time is : "
+                    << MINIMUM_PING_STATUS_REFRESH_TIME << std::endl;
+        return false;
+    }
+
     mDriver = move(driver);
     guard.commit();
 
@@ -131,10 +140,18 @@ bool Task::startHook()
 void Task::updateHook()
 {
     Status status = mDriver->autoStatus();
-    auto rbs_reference = convertToZWithOrientationRBS(status);
+    RigidBodyState rbs_reference;
+    // Write the local usbl depth
+    rbs_reference.time = status.timestamp;
+    rbs_reference.position = Eigen::Vector3d(NAN, NAN, status.environment.depth / 10.);
+    // Write the local usbl orientation
+    if (m_orientation_output_flag) {
+        rbs_reference.orientation = convertToOrientationQuaterniond(status);
+    }
+
     _local2nwu_orientation_with_z.write(rbs_reference);
 
-    if (base::Time::now() - m_previous_ping_refresh_time > m_ping_refresh_rate) {
+    if (base::Time::now() - m_previous_ping_refresh_time > m_ping_refresh_period) {
         m_previous_ping_refresh_time = base::Time::now();
 
         PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
