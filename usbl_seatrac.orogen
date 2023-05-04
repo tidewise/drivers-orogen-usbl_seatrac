@@ -54,8 +54,12 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
     # Maximum time that a beacon is not communicated with before its position filter
     # is reset
     property "xcvr_posflt_tmo", "base/Time"
+    # Ping's minimum refresh_period
+    property "ping_refresh_period", "base/Time"
+    # If there will be an orientation output inside the local2nwu_orientation_with_z output
+    property "orientation_output_flag", "bool", false
     # How often periodic status output messages are generated
-    property "status_mode",  "usbl_seatrac/protocol/StatusMode",
+    property "status_mode", "usbl_seatrac/protocol/StatusMode",
              "STATUS_MODE_2HZ5"
 
     # Position of the remote transponder in relation to the master's device body pose
