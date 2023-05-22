@@ -71,7 +71,7 @@ describe OroGen.usbl_seatrac.Task do
 
             assert(response[1].position.x.nan?)
             assert(response[1].position.y.nan?)
-            assert_equal(0.1, response[1].position.z)
+            assert_equal(-0.13, response[1].position.z)
             assert_in_delta(
                 (-179.9 * (3.14159265 / 180)), response[1].orientation.roll, 0.1
             )
@@ -141,7 +141,7 @@ describe OroGen.usbl_seatrac.Task do
 
             assert(response[1].position.x.nan?)
             assert(response[1].position.y.nan?)
-            assert_equal(0.1, response[1].position.z)
+            assert_equal(-0.13, response[1].position.z)
             assert(response[1].orientation.yaw.nan?)
             assert(response[1].orientation.pitch.nan?)
             assert(response[1].orientation.roll.nan?)
