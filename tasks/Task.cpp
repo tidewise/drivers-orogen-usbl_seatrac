@@ -141,7 +141,7 @@ void Task::updateHook()
     Status status = mDriver->autoStatus();
     RigidBodyState rbs_reference;
     // Write the local usbl depth
-    rbs_reference.position = Eigen::Vector3d(NAN, NAN, status.environment.depth / 10.);
+    rbs_reference.position = Eigen::Vector3d(NAN, NAN, -status.environment.pressure / 100.);
     // Write the local usbl orientation
     if (m_orientation_output_flag) {
         rbs_reference.orientation = convertToOrientationQuaterniond(status);
