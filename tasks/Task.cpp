@@ -143,7 +143,7 @@ void Task::updateHook()
     if (m_orientation_output_flag) {
         rbs_reference.orientation = convertToOrientationQuaterniond(status);
     }
-    rbs_reference.time = status.timestamp;
+    rbs_reference.time = base::Time::now();
     _local2nwu_orientation_with_z.write(rbs_reference);
 
     if (base::Time::now() - m_previous_ping_refresh_time > m_ping_refresh_period) {
