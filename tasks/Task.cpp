@@ -167,6 +167,7 @@ void Task::updateHook()
 
 void Task::processIO()
 {
+    mDriver->clear();
 }
 
 void Task::errorHook()
