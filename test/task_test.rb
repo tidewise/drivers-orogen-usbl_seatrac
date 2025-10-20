@@ -18,8 +18,7 @@ describe OroGen.usbl_seatrac.Task do
     describe "configuration" do
         it "configures the usbl's data properly" do
             ping_refresh_period = Time.at(2.401)
-            orientation_output_flag = true
-            usbl_task_setup(ping_refresh_period, orientation_output_flag)
+            usbl_task_setup(ping_refresh_period, true)
             set_cmd = usbl_configure_and_start(raw_io, task)
             # Verify the structure of set_cmd
             expected_packet = raw_packet_from_s("#16023F0D0D000000000000FA01A8C00000FFFF"\
@@ -28,21 +27,12 @@ describe OroGen.usbl_seatrac.Task do
                 "000000000000630F2C010A00000000000000030A3C7680\r\n")
             assert_equal(set_cmd.data, expected_packet.data)
         end
-
-        it "fails to configure if it requires orientation and has a bellow minimum"\
-           "refresh period" do
-            ping_refresh_period = Time.at(2.300)
-            orientation_output_flag = true
-            usbl_task_setup(ping_refresh_period, orientation_output_flag)
-            expect_execution.scheduler(true).to { fail_to_start task }
-        end
     end
 
     describe "while running with orientation" do
         before do
             ping_refresh_period = Time.at(2.401)
-            orientation_output_flag = true
-            usbl_task_setup(ping_refresh_period, orientation_output_flag)
+            usbl_task_setup(ping_refresh_period, true)
             usbl_configure_and_start(raw_io, task)
         end
 
@@ -111,8 +101,7 @@ describe OroGen.usbl_seatrac.Task do
     describe "while running without orientation" do
         before do
             ping_refresh_period = Time.at(0.0)
-            orientation_output_flag = false
-            usbl_task_setup(ping_refresh_period, orientation_output_flag)
+            usbl_task_setup(ping_refresh_period, false)
             usbl_configure_and_start(raw_io, task)
         end
 

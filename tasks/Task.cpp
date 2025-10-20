@@ -2,6 +2,7 @@
 
 #include "Task.hpp"
 #include <iodrivers_base/ConfigureGuard.hpp>
+#include <usbl_seatrac/Protocol.hpp>
 
 using namespace usbl_seatrac;
 using base::samples::Pressure;
@@ -99,14 +100,6 @@ bool Task::configureHook()
     m_orientation_output_flag = _orientation_output_flag.get();
     m_ping_refresh_period = _ping_refresh_period.get();
 
-    if (m_orientation_output_flag &&
-        MINIMUM_PING_STATUS_REFRESH_TIME > m_ping_refresh_period) {
-        LOG_ERROR_S << " Due to hardware limitations, the minimum ping update rate "
-                       "required to get orientation is : "
-                    << MINIMUM_PING_STATUS_REFRESH_TIME << std::endl;
-        return false;
-    }
-
     mDriver = move(driver);
     guard.commit();
 
@@ -138,15 +131,19 @@ bool Task::startHook()
 
 void Task::updateHook()
 {
-    Status status = mDriver->autoStatus();
+    Status status = mDriver->getStatusProtocol(
+        protocol::STATUS_ENVIRONMENT | protocol::STATUS_ATTITUDE
+    );
     RigidBodyState rbs_reference;
     // Write the local usbl depth
-    rbs_reference.position = Eigen::Vector3d(NAN, NAN, -status.environment.pressure / 100.);
+    rbs_reference.position = Eigen::Vector3d(
+        NAN, NAN, -static_cast<float>(status.environment.pressure) / 100.
+    );
     // Write the local usbl orientation
     if (m_orientation_output_flag) {
         rbs_reference.orientation = convertToOrientationQuaterniond(status);
     }
-    rbs_reference.time = status.timestamp;
+    rbs_reference.time = base::Time::now();
     _local2nwu_orientation_with_z.write(rbs_reference);
 
     if (base::Time::now() - m_previous_ping_refresh_time > m_ping_refresh_period) {
@@ -167,6 +164,7 @@ void Task::updateHook()
 
 void Task::processIO()
 {
+    mDriver->clear();
 }
 
 void Task::errorHook()

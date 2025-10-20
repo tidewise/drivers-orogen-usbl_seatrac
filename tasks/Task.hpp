@@ -8,12 +8,6 @@
 #include <base/samples/RigidBodyState.hpp>
 #include <usbl_seatrac/Driver.hpp>
 
-/**
- * The minimum ping refresh rate in case it will need the local usbl's orientation
- * information
- */
-static const base::Time MINIMUM_PING_STATUS_REFRESH_TIME = base::Time::fromSeconds(2.4);
-
 namespace usbl_seatrac {
 
     /*! \class Task
