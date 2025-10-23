@@ -32,14 +32,14 @@ static Eigen::Quaterniond convertToOrientationQuaterniond(Status const& data)
     return orientation;
 }
 
-static samples::RigidBodyState convertToPositionRBS(PingResult const& data)
+static samples::RigidBodyState convertToPositionRBS(base::Time const& time,
+    protocol::AcousticFixPosition const& fix)
 {
     samples::RigidBodyState rbs;
-
-    rbs.time = data.timestamp;
-    rbs.position = Eigen::Vector3d(data.response.acoustic_fix.position.north / 10.0,
-        data.response.acoustic_fix.position.east / 10.0,
-        data.response.acoustic_fix.position.depth / 10.0);
+    rbs.time = time;
+    rbs.position = Eigen::Vector3d(fix.position.north / 10.0,
+        fix.position.east / 10.0,
+        fix.position.depth / 10.0);
     return rbs;
 }
 
@@ -154,6 +154,8 @@ bool Task::startHook()
         writePingRequestIfPossible();
     }
 
+    m_position_mode = _position_mode.get();
+    m_track_count = _track_count.get();
     return true;
 }
 
@@ -176,7 +178,12 @@ void Task::writePingRequestIfPossible()
         return;
     }
 
-    mDriver->writePingRequest(_destination_id.get(), _msg_type.get());
+    if (m_position_mode == POSITION_MODE_PING) {
+        mDriver->writePingRequest(_destination_id.get(), _msg_type.get());
+    }
+    else if (m_position_mode == POSITION_MODE_TRACK) {
+        mDriver->writeTrackRequest(_destination_id.get(), m_track_count);
+    }
     mPingInFlight = true;
 }
 
@@ -189,6 +196,14 @@ void Task::processIO()
     if (update & Driver::UPDATE_PING_RESULT) {
         outputPingResultData(mDriver->getLastReceivedPingResult());
         mPingInFlight = false;
+    }
+    if (update & Driver::UPDATE_TRACK_RESULT) {
+        auto data = mDriver->getLastReceivedTrackResult();
+        outputTrackResultData(data);
+
+        if (data.flag == ERROR || data.response.response_no == m_track_count) {
+            mPingInFlight = false;
+        }
     }
 
     updateWorkingPressureState(mDriver->getLastReceivedStatus());
@@ -210,10 +225,22 @@ void Task::outputPingResultData(PingResult const& result)
 {
     auto ping = result;
     ping.timestamp = base::Time::now();
-    _ping_status.write(ping);
+    _ping_result.write(ping);
 
     if (ping.flag == 1) {
-        auto rbs = convertToPositionRBS(ping);
+        auto rbs = convertToPositionRBS(ping.timestamp, ping.response.acoustic_fix);
+        _remote2local_position.write(rbs);
+    }
+}
+
+void Task::outputTrackResultData(TrackResult const& result)
+{
+    auto track = result;
+    track.timestamp = base::Time::now();
+    _track_result.write(track);
+
+    if (track.flag == 1) {
+        auto rbs = convertToPositionRBS(track.timestamp, track.response.acoustic_fix);
         _remote2local_position.write(rbs);
     }
 }

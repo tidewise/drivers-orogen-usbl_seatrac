@@ -38,8 +38,12 @@ argument.
         std::unique_ptr<usbl_seatrac::Driver> mDriver;
         bool mPingInFlight;
 
+        PositionMode m_position_mode;
+        int m_track_count;
+
         void outputStatusData(Status const& status);
         void outputPingResultData(PingResult const& result);
+        void outputTrackResultData(TrackResult const& result);
         bool isPressureSafe(Status const& status) const;
         void updateWorkingPressureState(Status const& status);
         void writePingRequestIfPossible();

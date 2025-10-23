@@ -8,12 +8,12 @@ import_types_from "iodrivers_base"
 using_task_library "iodrivers_base"
 
 using_library "usbl_seatrac"
+import_types_from "usbl_seatracTypes.hpp"
 import_types_from "usbl_seatrac/Protocol.hpp"
 import_types_from "usbl_seatrac/Ping.hpp"
+import_types_from "usbl_seatrac/Track.hpp"
 
 # Driver task for USBL Seatrac X150/X010
-# The corresponding C++ class can be edited in tasks/Task.hpp and
-# tasks/Task.cpp, and will be put in the usbl_seatrac namespace.
 task_context "Task", subclasses: "iodrivers_base::Task" do
     needs_configuration
 
@@ -61,11 +61,17 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
     # disable it
     property "safe_operational_pressure", "/base/Pressure"
 
+    # How often periodic status output messages are generated
+    property "position_mode", "usbl_seatrac/PositionMode", "POSITION_MODE_PING"
+    # How many pings should be requested in POSITION_MODE_TRACK mode
+    property "track_count", "int", 1
+
     # Position of the remote transponder in relation to the master's device body pose
     output_port("remote2local_position", "base/samples/RigidBodyState")
     # USBL Beacon X150  - z = local_depth , orientation = local_attitude
     output_port("local2nwu_orientation_with_z", "base/samples/RigidBodyState")
-    output_port("ping_status", "usbl_seatrac/PingResult")
+    output_port("ping_result", "usbl_seatrac/PingResult")
+    output_port("track_result", "usbl_seatrac/TrackResult")
 
     error_states "UNSAFE_WORKING_PRESSURE"
 
