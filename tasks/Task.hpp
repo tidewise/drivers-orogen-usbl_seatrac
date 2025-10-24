@@ -53,6 +53,8 @@ argument.
          */
         bool m_orientation_output_flag;
 
+        base::Pressure m_safe_operational_pressure;
+
         void processIO();
 
     public:
@@ -143,6 +145,8 @@ argument.
             bool xcvr_fix_msgs,
             bool xcvr_diag_msgs,
             float xcvr_range_tmo);
+
+        void checkWorkingPressure(int32_t pressure);
     };
 }
 

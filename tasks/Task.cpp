@@ -11,6 +11,7 @@ using base::samples::RigidBodyState;
 Task::Task(std::string const& name)
     : TaskBase(name)
 {
+    _safe_operational_pressure.set(Pressure::fromBar(base::Time::now(), 1.01));
 }
 
 Task::~Task()
@@ -99,6 +100,7 @@ bool Task::configureHook()
     mMsgType = _msg_type.get();
     m_orientation_output_flag = _orientation_output_flag.get();
     m_ping_refresh_period = _ping_refresh_period.get();
+    m_safe_operational_pressure = _safe_operational_pressure.get();
 
     mDriver = move(driver);
     guard.commit();
@@ -131,20 +133,26 @@ bool Task::startHook()
 
 void Task::updateHook()
 {
+
     Status status = mDriver->getStatusProtocol(
-        protocol::STATUS_ENVIRONMENT | protocol::STATUS_ATTITUDE
-    );
+        protocol::STATUS_ENVIRONMENT | protocol::STATUS_ATTITUDE);
     RigidBodyState rbs_reference;
     // Write the local usbl depth
-    rbs_reference.position = Eigen::Vector3d(
-        NAN, NAN, -static_cast<float>(status.environment.pressure) / 100.
-    );
+    rbs_reference.position = Eigen::Vector3d(NAN,
+        NAN,
+        -static_cast<float>(status.environment.pressure) / 100.);
     // Write the local usbl orientation
     if (m_orientation_output_flag) {
         rbs_reference.orientation = convertToOrientationQuaterniond(status);
     }
     rbs_reference.time = base::Time::now();
     _local2nwu_orientation_with_z.write(rbs_reference);
+
+    checkWorkingPressure(status.environment.pressure);
+    // Early return to avoid pinging when its not safe
+    if (state() == UNSAFE_WORKING_PRESSURE) {
+        return;
+    }
 
     if (base::Time::now() - m_previous_ping_refresh_time > m_ping_refresh_period) {
         m_previous_ping_refresh_time = base::Time::now();
@@ -170,6 +178,14 @@ void Task::processIO()
 void Task::errorHook()
 {
     TaskBase::errorHook();
+
+    if (state() == UNSAFE_WORKING_PRESSURE) {
+        Status status = mDriver->getStatusProtocol(protocol::STATUS_ENVIRONMENT);
+        if (base::isUnknown(m_safe_operational_pressure.toBar()) ||
+            status.environment.pressure > m_safe_operational_pressure.toBar()) {
+            recover();
+        }
+    }
 }
 
 void Task::stopHook()
@@ -181,4 +197,12 @@ void Task::cleanupHook()
 {
     TaskBase::cleanupHook();
     mDriver.reset();
+}
+
+void Task::checkWorkingPressure(int32_t pressure)
+{
+    if (pressure < m_safe_operational_pressure.toBar() &&
+        state() != UNSAFE_WORKING_PRESSURE) {
+        error(UNSAFE_WORKING_PRESSURE);
+    }
 }

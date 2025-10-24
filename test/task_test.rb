@@ -153,8 +153,34 @@ describe OroGen.usbl_seatrac.Task do
         end
     end
 
+    describe "behavior when in unsafe working pressure" do
+        before do
+            ping_refresh_period = Time.at(0.0)
+            usbl_task_setup(ping_refresh_period, false, 500_000)
+            usbl_configure_and_start(raw_io, task)
+        end
+
+        it "does not ping if the pressure is below the safe threshold" do
+            packet1 = raw_packet_from_s("$1001B200000000000000010001000100000001000000" \
+                "0100B429\r\n$")
+            packet2 = raw_packet_from_s("$4000028015\r\n")
+            packet3 = raw_packet_from_s("$42020F07020101010101010101010101010101010101" \
+                "010101010101010101010101010101010101010101010101010101B0\r\n")
+            response =
+                expect_execution \
+                    { syskit_write @raw_io.out_port, packet1, packet2, packet3 }
+                .to do
+                    emit(task.unsafe_working_pressure_event)
+                    have_no_new_sample task.ping_status_port
+                end
+        end
+    end
+
     # rubocop: disable Metrics/AbcSize
-    def usbl_task_setup(ping_refresh_period, orientation_output_flag)
+    def usbl_task_setup(
+        ping_refresh_period, orientation_output_flag,
+        safe_operational_pressure = Float::NAN
+    )
         @task = syskit_deploy(OroGen.usbl_seatrac.Task.deployed_as("usbl_test"))
         @task.properties.destination_id = 0x02
         @task.properties.msg_type = 0x06
@@ -174,6 +200,7 @@ describe OroGen.usbl_seatrac.Task do
         @task.properties.status_mode = 0x02
         @task.properties.ping_refresh_period = ping_refresh_period
         @task.properties.orientation_output_flag = orientation_output_flag
+        @task.properties.safe_operational_pressure = { pascal: safe_operational_pressure }
         @raw_io = setup_iodrivers_base_with_ports(@task, configure_and_start: false)
     end
 
