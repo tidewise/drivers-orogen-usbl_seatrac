@@ -61,12 +61,17 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
     # How often periodic status output messages are generated
     property "status_mode", "usbl_seatrac/protocol/StatusMode",
              "STATUS_MODE_2HZ5"
+    # Goes into exception if the working pressure is below this value. Set it to NAN to
+    # disable it
+    property "safe_operational_pressure", "/base/Pressure"
 
     # Position of the remote transponder in relation to the master's device body pose
     output_port("remote2local_position", "base/samples/RigidBodyState")
     # USBL Beacon X150  - z = local_depth , orientation = local_attitude
     output_port("local2nwu_orientation_with_z", "base/samples/RigidBodyState")
     output_port("ping_status", "usbl_seatrac/PingStatus")
+
+    error_states "UNSAFE_WORKING_PRESSURE"
 
     periodic 0.1
 end
