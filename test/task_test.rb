@@ -116,6 +116,14 @@ describe OroGen.usbl_seatrac.Task do
             ping_send = usbl_handle_configuration_request("$400001C014\r\n")
             assert_equal "#40020680B6\r\n", ping_send
         end
+
+        it "times out if there are no packets coming from the device" do
+            # Wait for the component's stopHook, which attempts to disable
+            # periodic status messages
+            status_cfg_set = usbl_handle_configuration_request("$12000CA0\r\n")
+            assert_equal "#120000A005\r\n", status_cfg_set
+            expect_execution.to_emit task.io_timeout_event
+        end
     end
 
     describe "behavior regarding the safe working pressure parameter" do
@@ -157,17 +165,17 @@ describe OroGen.usbl_seatrac.Task do
 
             message = raw_packet_from_s(STATUS_WITH_13_MILLIBAR_PRESSURE)
             expect_execution { syskit_write to_driver, message }
-                .to_have_one_new_sample(task.local2nwu_orientation_with_z_port)
+                .to do
+                    have_one_new_sample(task.local2nwu_orientation_with_z_port)
+                    emit task.unsafe_working_pressure_event
+                end
 
             ping_message = raw_packet_from_s(
                 "$42020F07020101010101010101010101010101010101" \
                 "010101010101010101010101010101010101010101010101010101B0\r\n"
             )
             expect_execution { syskit_write to_driver, ping_message }
-                .to do
-                    have_no_new_sample from_driver, at_least_during: 0.5
-                    emit task.unsafe_working_pressure_event
-                end
+                .to_have_no_new_sample from_driver, at_least_during: 0.5
         end
 
         it "starts pinging if the pressure gets above the safe threshold" do
@@ -215,9 +223,8 @@ describe OroGen.usbl_seatrac.Task do
     end
 
     def usbl_task_setup(safe_operational_pressure = Float::NAN)
-        @task = syskit_deploy(
-            OroGen.usbl_seatrac.Task.deployed_as("usbl_test")
-        )
+        @task = syskit_deploy(OroGen.usbl_seatrac.Task.deployed_as("usbl_test"))
+        @task.properties.io_wait_timeout = Time.at(1)
         @task.properties.destination_id = 0x02
         @task.properties.msg_type = 0x06
         @task.properties.xcvr_beacon_id = 0x0F
