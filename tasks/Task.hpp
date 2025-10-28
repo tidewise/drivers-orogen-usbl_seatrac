@@ -146,7 +146,7 @@ argument.
             bool xcvr_diag_msgs,
             float xcvr_range_tmo);
 
-        void checkWorkingPressure(int32_t pressure);
+        void checkWorkingPressure(base::Pressure const& pressure);
     };
 }
 

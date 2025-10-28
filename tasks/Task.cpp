@@ -148,7 +148,9 @@ void Task::updateHook()
     rbs_reference.time = base::Time::now();
     _local2nwu_orientation_with_z.write(rbs_reference);
 
-    checkWorkingPressure(status.environment.pressure);
+    // Environment pressure is in millibar, with 0.5% tolerance
+    checkWorkingPressure(
+        base::Pressure::fromBar(0.995 * status.environment.pressure / 1000.0));
     // Early return to avoid pinging when its not safe
     if (state() == UNSAFE_WORKING_PRESSURE) {
         return;
@@ -199,9 +201,9 @@ void Task::cleanupHook()
     mDriver.reset();
 }
 
-void Task::checkWorkingPressure(int32_t pressure)
+void Task::checkWorkingPressure(base::Pressure const& pressure)
 {
-    if (pressure < m_safe_operational_pressure.toBar() &&
+    if (pressure.toPa() < m_safe_operational_pressure.toPa() &&
         state() != UNSAFE_WORKING_PRESSURE) {
         error(UNSAFE_WORKING_PRESSURE);
     }
