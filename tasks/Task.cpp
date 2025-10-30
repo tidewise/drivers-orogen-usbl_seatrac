@@ -124,6 +124,8 @@ bool Task::configureHook()
         _xcvr_diag_msgs.get(),
         _xcvr_range_tmo.get());
 
+    m_position_mode = _position_mode.get();
+    m_track_count = _track_count.get();
     mDriver->writeStatusConfig(0, protocol::STATUS_MODE_MANUAL);
     return true;
 }
@@ -154,8 +156,6 @@ bool Task::startHook()
         writePingRequestIfPossible();
     }
 
-    m_position_mode = _position_mode.get();
-    m_track_count = _track_count.get();
     return true;
 }
 
