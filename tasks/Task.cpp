@@ -1,7 +1,6 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "Task.hpp"
-#include <base/Timeout.hpp>
 #include <iodrivers_base/ConfigureGuard.hpp>
 #include <usbl_seatrac/Protocol.hpp>
 
@@ -12,6 +11,7 @@ Task::Task(std::string const& name)
     : TaskBase(name)
 {
     _safe_operational_pressure.set(samples::Pressure::fromBar(base::Time::now(), 1.01));
+    _ping_in_flight_timeout.set(Time::fromSeconds(10));
     setRuntimeErrorIOProcessingEnabled(true);
 }
 
@@ -124,6 +124,7 @@ bool Task::configureHook()
         _xcvr_diag_msgs.get(),
         _xcvr_range_tmo.get());
 
+    mPingInFlightTimeout = Timeout(_ping_in_flight_timeout.get());
     m_position_mode = _position_mode.get();
     m_track_count = _track_count.get();
     mDriver->writeStatusConfig(0, protocol::STATUS_MODE_MANUAL);
@@ -185,6 +186,7 @@ void Task::writePingRequestIfPossible()
         mDriver->writeTrackRequest(_destination_id.get(), m_track_count);
     }
     mPingInFlight = true;
+    mPingInFlightTimeout.restart();
 }
 
 void Task::processIO()
@@ -206,6 +208,9 @@ void Task::processIO()
         }
     }
 
+    if (mPingInFlightTimeout.elapsed()) {
+        mPingInFlight = false;
+    }
     updateWorkingPressureState(mDriver->getLastReceivedStatus());
     writePingRequestIfPossible();
 }

@@ -66,6 +66,13 @@ task_context "Task", subclasses: "iodrivers_base::Task" do
     # How many pings should be requested in POSITION_MODE_TRACK mode
     property "track_count", "int", 1
 
+    # Timeout after which the component considers that the USBL is not busy, and can
+    # request a new ping
+    #
+    # The default is 10s. It is meant as a measure for lost replies, especially in
+    # TRACK mode
+    property "ping_in_flight_timeout", "/base/Time"
+
     # Position of the remote transponder in relation to the master's device body pose
     output_port("remote2local_position", "base/samples/RigidBodyState")
     # USBL Beacon X150  - z = local_depth , orientation = local_attitude

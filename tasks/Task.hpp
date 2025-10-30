@@ -4,6 +4,7 @@
 #define USBL_SEATRAC_TASK_TASK_HPP
 
 #include "usbl_seatrac/TaskBase.hpp"
+#include <base/Timeout.hpp>
 #include <base/samples/Pressure.hpp>
 #include <base/samples/RigidBodyState.hpp>
 #include <usbl_seatrac/Driver.hpp>
@@ -40,6 +41,7 @@ argument.
 
         PositionMode m_position_mode;
         int m_track_count;
+        base::Timeout mPingInFlightTimeout;
 
         void outputStatusData(Status const& status);
         void outputPingResultData(PingResult const& result);
