@@ -36,23 +36,17 @@ argument.
 
     protected:
         std::unique_ptr<usbl_seatrac::Driver> mDriver;
+        bool mPingInFlight;
+
+        void outputStatusData(Status const& status);
+        void outputPingResultData(PingResult const& result);
+        bool isPressureSafe(Status const& status) const;
+        void updateWorkingPressureState(Status const& status);
+        void writePingRequestIfPossible();
 
     private:
         usbl_seatrac::protocol::BeaconIdentificationCode mDestinationId;
         usbl_seatrac::protocol::AcousticMessageType mMsgType;
-        /**
-         * The ping's refresh period
-         */
-        base::Time m_ping_refresh_period;
-        /**
-         * The previous time where a ping was done
-         */
-        base::Time m_previous_ping_refresh_time;
-        /**
-         * If it outputs the orientation
-         */
-        bool m_orientation_output_flag;
-
         base::Pressure m_safe_operational_pressure;
 
         void processIO();
@@ -145,8 +139,6 @@ argument.
             bool xcvr_fix_msgs,
             bool xcvr_diag_msgs,
             float xcvr_range_tmo);
-
-        void checkWorkingPressure(int32_t pressure);
     };
 }
 

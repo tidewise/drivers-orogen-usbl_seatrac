@@ -1,17 +1,18 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "Task.hpp"
+#include <base/Timeout.hpp>
 #include <iodrivers_base/ConfigureGuard.hpp>
 #include <usbl_seatrac/Protocol.hpp>
 
 using namespace usbl_seatrac;
-using base::samples::Pressure;
-using base::samples::RigidBodyState;
+using namespace base;
 
 Task::Task(std::string const& name)
     : TaskBase(name)
 {
-    _safe_operational_pressure.set(Pressure::fromBar(base::Time::now(), 1.01));
+    _safe_operational_pressure.set(samples::Pressure::fromBar(base::Time::now(), 1.01));
+    setRuntimeErrorIOProcessingEnabled(true);
 }
 
 Task::~Task()
@@ -31,9 +32,9 @@ static Eigen::Quaterniond convertToOrientationQuaterniond(Status const& data)
     return orientation;
 }
 
-static RigidBodyState convertToPositionRBS(PingStatus const& data)
+static samples::RigidBodyState convertToPositionRBS(PingResult const& data)
 {
-    RigidBodyState rbs;
+    samples::RigidBodyState rbs;
 
     rbs.time = data.timestamp;
     rbs.position = Eigen::Vector3d(data.response.acoustic_fix.position.north / 10.0,
@@ -59,7 +60,7 @@ void Task::configureUSBLSettings(
     float xcvr_range_tmo)
 {
     // Set initial settings
-    protocol::Settings new_settings = mDriver->getSettingsProtocol();
+    protocol::Settings new_settings = mDriver->readSettings();
 
     uint8_t status_flags = status_mode;
     uint8_t enviromental_flags = auto_vos | (auto_pressure_ofs << 1);
@@ -76,7 +77,7 @@ void Task::configureUSBLSettings(
     new_settings.xcvr_resp_time = static_cast<uint16_t>(xcvr_resp_time.toMilliseconds());
     new_settings.xcvr_posflt_tmo = static_cast<uint16_t>(xcvr_posflt_tmo.toSeconds());
     new_settings.xcvr_beacon_id = xcvr_beacon_id;
-    mDriver->setSettingsProtocol(new_settings);
+    mDriver->writeSettings(new_settings);
 }
 
 /// The following lines are template definitions for the various state machine
@@ -84,6 +85,11 @@ void Task::configureUSBLSettings(
 // documentation about them.
 bool Task::configureHook()
 {
+    if (_status_mode.get() == protocol::STATUS_MODE_MANUAL) {
+        LOG_ERROR_S << "STATUS_MODE_MANUAL not allowed as a status mode, choose one of "
+                    << "the periodic status modes";
+        return false;
+    }
 
     std::unique_ptr<usbl_seatrac::Driver> driver(new Driver());
     iodrivers_base::ConfigureGuard guard(this);
@@ -98,8 +104,6 @@ bool Task::configureHook()
 
     mDestinationId = _destination_id.get();
     mMsgType = _msg_type.get();
-    m_orientation_output_flag = _orientation_output_flag.get();
-    m_ping_refresh_period = _ping_refresh_period.get();
     m_safe_operational_pressure = _safe_operational_pressure.get();
 
     mDriver = move(driver);
@@ -120,6 +124,7 @@ bool Task::configureHook()
         _xcvr_diag_msgs.get(),
         _xcvr_range_tmo.get());
 
+    mDriver->writeStatusConfig(0, protocol::STATUS_MODE_MANUAL);
     return true;
 }
 
@@ -128,81 +133,122 @@ bool Task::startHook()
     if (!TaskBase::startHook()) {
         return false;
     }
+
+    // Doing this here instead of startHook is a detail, but it helps with unit testing
+    mDriver->writeStatusConfig(protocol::STATUS_ENVIRONMENT | protocol::STATUS_ATTITUDE,
+        _status_mode.get());
+
+    Timeout status_timeout(Time::fromSeconds(3));
+    while (mDriver->process() != Driver::UPDATE_STATUS) {
+        if (status_timeout.elapsed()) {
+            LOG_ERROR_S << "Did not receive a status message in 3s";
+            return false;
+        }
+    }
+
+    auto status = mDriver->getLastReceivedStatus();
+    outputStatusData(status);
+
+    mPingInFlight = false;
+    if (isPressureSafe(status)) {
+        writePingRequestIfPossible();
+    }
+
     return true;
 }
 
 void Task::updateHook()
 {
-
-    Status status = mDriver->getStatusProtocol(
-        protocol::STATUS_ENVIRONMENT | protocol::STATUS_ATTITUDE);
-    RigidBodyState rbs_reference;
-    // Write the local usbl depth
-    rbs_reference.position = Eigen::Vector3d(NAN,
-        NAN,
-        -static_cast<float>(status.environment.pressure) / 100.);
-    // Write the local usbl orientation
-    if (m_orientation_output_flag) {
-        rbs_reference.orientation = convertToOrientationQuaterniond(status);
-    }
-    rbs_reference.time = base::Time::now();
-    _local2nwu_orientation_with_z.write(rbs_reference);
-
-    checkWorkingPressure(status.environment.pressure);
-    // Early return to avoid pinging when its not safe
-    if (state() == UNSAFE_WORKING_PRESSURE) {
-        return;
-    }
-
-    if (base::Time::now() - m_previous_ping_refresh_time > m_ping_refresh_period) {
-        m_previous_ping_refresh_time = base::Time::now();
-
-        PingStatus ping = mDriver->Ping(mDestinationId, mMsgType);
-        ping.timestamp = base::Time::now();
-        _ping_status.write(ping);
-
-        if (ping.flag == 1) {
-            auto rbs = convertToPositionRBS(ping);
-            _remote2local_position.write(rbs);
-        }
-    }
-
     TaskBase::updateHook();
-}
-
-void Task::processIO()
-{
-    mDriver->clear();
 }
 
 void Task::errorHook()
 {
     TaskBase::errorHook();
+}
 
+void Task::writePingRequestIfPossible()
+{
     if (state() == UNSAFE_WORKING_PRESSURE) {
-        Status status = mDriver->getStatusProtocol(protocol::STATUS_ENVIRONMENT);
-        if (base::isUnknown(m_safe_operational_pressure.toBar()) ||
-            status.environment.pressure > m_safe_operational_pressure.toBar()) {
-            recover();
-        }
+        return;
+    }
+    else if (mPingInFlight) {
+        return;
+    }
+
+    mDriver->writePingRequest(_destination_id.get(), _msg_type.get());
+    mPingInFlight = true;
+}
+
+void Task::processIO()
+{
+    auto update = mDriver->process();
+    if (update & Driver::UPDATE_STATUS) {
+        outputStatusData(mDriver->getLastReceivedStatus());
+    }
+    if (update & Driver::UPDATE_PING_RESULT) {
+        outputPingResultData(mDriver->getLastReceivedPingResult());
+        mPingInFlight = false;
+    }
+
+    updateWorkingPressureState(mDriver->getLastReceivedStatus());
+    writePingRequestIfPossible();
+}
+
+void Task::outputStatusData(Status const& status)
+{
+    float pressure_bar = static_cast<float>(status.environment.pressure) / 1000;
+
+    samples::RigidBodyState rbs_reference;
+    rbs_reference.time = base::Time::now();
+    rbs_reference.position = Eigen::Vector3d(NAN, NAN, -pressure_bar * 10);
+    rbs_reference.orientation = convertToOrientationQuaterniond(status);
+    _local2nwu_orientation_with_z.write(rbs_reference);
+}
+
+void Task::outputPingResultData(PingResult const& result)
+{
+    auto ping = result;
+    ping.timestamp = base::Time::now();
+    _ping_status.write(ping);
+
+    if (ping.flag == 1) {
+        auto rbs = convertToPositionRBS(ping);
+        _remote2local_position.write(rbs);
     }
 }
 
 void Task::stopHook()
 {
     TaskBase::stopHook();
+
+    mDriver->writeStatusConfig(0, protocol::STATUS_MODE_MANUAL);
 }
 
 void Task::cleanupHook()
 {
     TaskBase::cleanupHook();
+
     mDriver.reset();
 }
 
-void Task::checkWorkingPressure(int32_t pressure)
+bool Task::isPressureSafe(Status const& status) const
 {
-    if (pressure < m_safe_operational_pressure.toBar() &&
-        state() != UNSAFE_WORKING_PRESSURE) {
+    if (base::isUnset(m_safe_operational_pressure.toBar())) {
+        return true;
+    }
+
+    float pressure_bar = static_cast<float>(status.environment.pressure) / 1000;
+    return pressure_bar > m_safe_operational_pressure.toBar();
+}
+
+void Task::updateWorkingPressureState(Status const& status)
+{
+    auto safe = isPressureSafe(status);
+    if (safe && state() == UNSAFE_WORKING_PRESSURE) {
+        recover();
+    }
+    else if (!safe && state() != UNSAFE_WORKING_PRESSURE) {
         error(UNSAFE_WORKING_PRESSURE);
     }
 }
