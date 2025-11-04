@@ -9,6 +9,10 @@
  */
 
 namespace usbl_seatrac {
+    enum PositionMode {
+        POSITION_MODE_PING,
+        POSITION_MODE_TRACK
+    };
 }
 
 #endif

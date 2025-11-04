@@ -4,6 +4,7 @@
 #define USBL_SEATRAC_TASK_TASK_HPP
 
 #include "usbl_seatrac/TaskBase.hpp"
+#include <base/Timeout.hpp>
 #include <base/samples/Pressure.hpp>
 #include <base/samples/RigidBodyState.hpp>
 #include <usbl_seatrac/Driver.hpp>
@@ -38,8 +39,13 @@ argument.
         std::unique_ptr<usbl_seatrac::Driver> mDriver;
         bool mPingInFlight;
 
+        PositionMode m_position_mode;
+        int m_track_count;
+        base::Timeout mPingInFlightTimeout;
+
         void outputStatusData(Status const& status);
         void outputPingResultData(PingResult const& result);
+        void outputTrackResultData(TrackResult const& result);
         bool isPressureSafe(Status const& status) const;
         void updateWorkingPressureState(Status const& status);
         void writePingRequestIfPossible();

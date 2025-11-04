@@ -81,7 +81,7 @@ describe OroGen.usbl_seatrac.Task do
                 .to do
                     [
                         have_one_new_sample(task.remote2local_position_port),
-                        have_one_new_sample(task.ping_status_port)
+                        have_one_new_sample(task.ping_result_port)
                     ]
                 end
 
@@ -109,7 +109,7 @@ describe OroGen.usbl_seatrac.Task do
                             task.remote2local_position_port,
                             at_least_during: 0.5
                         ),
-                        have_one_new_sample(task.ping_status_port)
+                        have_one_new_sample(task.ping_result_port)
                     ]
                 end
 
@@ -147,7 +147,7 @@ describe OroGen.usbl_seatrac.Task do
             expect_execution { syskit_write to_driver, ping_message }
                 .to do
                     have_one_new_sample(task.remote2local_position_port)
-                    have_one_new_sample(task.ping_status_port)
+                    have_one_new_sample(task.ping_result_port)
                 end
 
             ping_send = usbl_handle_configuration_request("$400001C014\r\n")
