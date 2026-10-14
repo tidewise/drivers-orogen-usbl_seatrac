@@ -19,9 +19,11 @@ describe OroGen.usbl_seatrac.Task do
         if task.running?
             expect_execution { task.stop! }.join_all_waiting_work(false).to_run
 
-            status_cfg_set = usbl_handle_configuration_request("$12000CA0\r\n")
+            status_cfg_set = usbl_handle_configuration_request("$12000CA0\r\n") do |ctxt|
+                ctxt.emit task.stop_event
+            end
+
             assert_equal "#120000A005\r\n", status_cfg_set
-            expect_execution.to_emit task.stop_event
         end
     end
 
@@ -120,9 +122,11 @@ describe OroGen.usbl_seatrac.Task do
         it "times out if there are no packets coming from the device" do
             # Wait for the component's stopHook, which attempts to disable
             # periodic status messages
-            status_cfg_set = usbl_handle_configuration_request("$12000CA0\r\n")
+            status_cfg_set = usbl_handle_configuration_request("$12000CA0\r\n") do |ctxt|
+                ctxt.emit task.io_timeout_event
+            end
+
             assert_equal "#120000A005\r\n", status_cfg_set
-            expect_execution.to_emit task.io_timeout_event
         end
     end
 
